@@ -5,35 +5,24 @@ from ..models.pd.support import SupportPredictPayload
 from ..utils.participant_utils import get_or_create_application_participant
 
 
-def get_event_room(prefix: str, conversation_uuid: str) -> str:
-    return f"{prefix}_{conversation_uuid}"
-
-
 class SIO:
-    @web.sio("support_enter_room")
-    def support_enter_room(self, sid: str, data: dict) -> None:
-        """Join support conversation room"""
-        conversation_uuid = data.get('conversation_uuid')
-        if not conversation_uuid:
-            return
-
-        room = get_event_room('support', conversation_uuid)
-        self.context.sio.enter_room(sid, room)
-        log.info(f"Socket {sid} joined support room {room}")
-
-    @web.sio("support_leave_room")
-    def support_leave_room(self, sid: str, data: dict) -> None:
-        """Leave support conversation room"""
-        conversation_uuid = data.get('conversation_uuid')
-        if not conversation_uuid:
-            return
-
-        room = get_event_room('support', conversation_uuid)
-        self.context.sio.leave_room(sid, room)
-
     @web.sio("support_predict")
     def support_predict(self, sid: str, data: dict) -> None:
-        """Handle support message - delegates to chat_predict_sio"""
+        """
+        Handle support message prediction.
+
+        Flow:
+        1. Validate payload and user
+        2. Get/create application participant for the support agent
+        3. Delegate to chat_predict_sio RPC which handles:
+           - Creating user message group
+           - Emitting events to chat room
+           - Triggering agent prediction
+
+        Frontend should:
+        - Join room using chat_enter_room with conversation_id
+        - Listen for chat_predict events
+        """
         from tools import this
         module = this.for_module("support_assistant").module
 
@@ -53,7 +42,6 @@ class SIO:
             return
 
         user_id = current_user['id']
-
         module.ensure_user_enrolled(user_id)
 
         agent_id = module.descriptor.config.get('agent_id')
@@ -69,13 +57,16 @@ class SIO:
             application_project_id=agent_project_id,
         )
 
+        if not participant:
+            self._emit_error(sid, "Failed to setup support agent", "AGENT_ERROR")
+            return
+
         predict_payload = {
             'project_id': module.support_project_id,
             'conversation_uuid': parsed.conversation_uuid,
             'participant_id': participant['id'],
-            'content': parsed.content,
-            'attachments_info': parsed.attachments,
-            'stream_event': 'support_predict',
+            'user_input': parsed.content,
+            'attachments_info': parsed.attachments or [],
         }
 
         self.context.rpc_manager.call.chat_predict_sio(

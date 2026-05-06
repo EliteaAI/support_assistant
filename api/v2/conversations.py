@@ -3,8 +3,9 @@ from pylon.core.tools import log
 from tools import api_tools, auth, config as c, rpc_tools
 
 from ...models.pd.conversation import ConversationCreateRequest
-from ...utils.transforms import to_fe_conversation
 from ...utils.decorators import add_support_project_id
+
+from tools import serialize
 
 
 class API(api_tools.APIBase):
@@ -35,8 +36,7 @@ class API(api_tools.APIBase):
             sort_order='desc',
         )
 
-        items = [to_fe_conversation(conv) for conv in result.get('rows', [])]
-        return {"items": items, "total": result.get('total', 0)}, 200
+        return serialize({"items": result.get('rows', []), "total": result.get('total', 0)}), 200
 
     @add_support_project_id
     @auth.decorators.check_api({
@@ -58,7 +58,7 @@ class API(api_tools.APIBase):
         result = rpc_tools.RpcMixin().rpc.timeout(2).chat_create_conversation_rpc(
             project_id=project_id,
             user_id=user_id,
-            name=data.name or "Support Chat",
+            name=data.name or "New conversation",
             source='support',
             is_private=True,
             meta={
@@ -67,4 +67,4 @@ class API(api_tools.APIBase):
             },
         )
 
-        return to_fe_conversation(result), 201
+        return serialize(result), 201

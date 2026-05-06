@@ -1,4 +1,4 @@
-from tools import api_tools, auth, config as c, rpc_tools
+from tools import api_tools, auth, config as c, rpc_tools, serialize
 
 from ...utils.decorators import add_support_project_id
 
@@ -18,17 +18,28 @@ class API(api_tools.APIBase):
     def get(self, project_id: int, conversation_uuid: str, **kwargs):
         user_id = auth.current_user().get("id")
 
-        conversation = rpc_tools.RpcMixin().rpc.timeout(2).chat_get_conversation_by_uuid_rpc(
+        conversation_basic = rpc_tools.RpcMixin().rpc.timeout(2).chat_get_conversation_by_uuid_rpc(
             project_id=project_id,
             conversation_uuid=conversation_uuid,
             user_id=user_id,
             check_ownership=True,
         )
 
-        if not conversation:
+        if not conversation_basic:
             return {"error": "Conversation not found"}, 404
 
-        return conversation, 200
+        conversation_details = rpc_tools.RpcMixin().rpc.timeout(5).chat_get_conversation_details(
+            project_id=project_id,
+            conversation_id=conversation_basic['id'],
+            user_id=user_id,
+            include_participants=True,
+            include_message_groups=True,
+        )
+
+        if not conversation_details:
+            return {"error": "Failed to load conversation details"}, 500
+
+        return serialize(conversation_details), 200
 
     @add_support_project_id
     @auth.decorators.check_api({
@@ -53,4 +64,4 @@ class API(api_tools.APIBase):
             error = result.get('error', 'Conversation not found')
             return {"error": error}, 404
 
-        return {"success": True}, 200
+        return serialize({"success": True}), 200

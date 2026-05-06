@@ -1,8 +1,8 @@
 from flask import request
-from tools import api_tools, auth, config as c
+from tools import api_tools, auth, config as c, serialize
 
-from ...utils.transforms import to_fe_config
 from ...utils.decorators import add_support_project_id
+
 
 
 class API(api_tools.APIBase):
@@ -21,8 +21,14 @@ class API(api_tools.APIBase):
         """Get support assistant config for FE widget"""
         from tools import this
         module = this.for_module("support_assistant").module
+        config: dict = module.descriptor.config
 
-        return to_fe_config(module.descriptor.config, module.is_enabled), 200
+        return serialize({
+            'enabled': True,
+            'title': config.get('assistant_name', 'ELITEA Support'),
+            'welcomeMessage': config.get('welcome_message', ''),
+            'placeholder': config.get('placeholder', 'Type a message...'),
+        }), 200
 
     @add_support_project_id
     @auth.decorators.check_api({
@@ -49,5 +55,11 @@ class API(api_tools.APIBase):
             module.descriptor.config['agent_project_id'] = data['agent_project_id']
 
         module.descriptor.config.save()
+        config: dict = module.descriptor.config
 
-        return to_fe_config(module.descriptor.config, module.is_enabled), 200
+        return serialize({
+            'enabled': True,
+            'title': config.get('assistant_name', 'ELITEA Support'),
+            'welcomeMessage': config.get('welcome_message', ''),
+            'placeholder': config.get('placeholder', 'Type a message...'),
+        }), 200
