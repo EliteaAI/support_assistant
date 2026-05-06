@@ -1,8 +1,7 @@
 from pylon.core.tools import web, log
-from tools import auth
+from tools import auth, db
 
 from ..models.pd.support import SupportPredictPayload
-from ..utils.participant_utils import get_or_create_application_participant
 
 
 class SIO:
@@ -13,14 +12,14 @@ class SIO:
 
         Flow:
         1. Validate payload and user
-        2. Get/create application participant for the support agent
+        2. Get conversation by UUID and add application participant
         3. Delegate to chat_predict_sio RPC which handles:
            - Creating user message group
            - Emitting events to chat room
            - Triggering agent prediction
 
         Frontend should:
-        - Join room using chat_enter_room with conversation_id
+        - Join room using chat_enter_room with {project_id, conversation_id}
         - Listen for chat_predict events
         """
         from tools import this
@@ -51,8 +50,20 @@ class SIO:
 
         agent_project_id = module.descriptor.config.get('agent_project_id') or module.support_project_id
 
-        participant = get_or_create_application_participant(
+        conversation = self.context.rpc_manager.call.chat_get_conversation_by_uuid_rpc(
             project_id=module.support_project_id,
+            conversation_uuid=parsed.conversation_uuid,
+            user_id=user_id,
+            check_ownership=True,
+        )
+
+        if not conversation:
+            self._emit_error(sid, "Conversation not found", "NOT_FOUND")
+            return
+
+        participant = self.context.rpc_manager.call.chat_add_application_participant_rpc(
+            project_id=module.support_project_id,
+            conversation_id=conversation['id'],
             application_id=agent_id,
             application_project_id=agent_project_id,
         )
