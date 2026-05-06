@@ -5,8 +5,8 @@ enabled: true
 support_project_id: null
 
 # Agent configuration
-agent_project_id: 2       # Project where support agent lives
-agent_id: 5               # Application ID of support agent (test)
+agent_project_id: null       # Project where support agent lives
+agent_id: null               # Application ID of support agent (test)
 
 # UI customization
 welcome_message: "Hello! How can I help you today?"
