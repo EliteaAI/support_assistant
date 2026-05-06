@@ -1,0 +1,52 @@
+{
+  "$schema": "https://elitea.ai/admin-config-schema/v1",
+  "plugin": "support_assistant",
+  "properties": {
+    "support_assistant_enabled": {
+      "type": "boolean",
+      "title": "Enable Support Assistant",
+      "description": "When enabled, the Support Assistant is available to all users environment-wide.",
+      "path": "enabled",
+      "section": "guardrails",
+      "default": false
+    },
+    "support_assistant_agent_project_id": {
+      "type": "integer",
+      "title": "Agent Project",
+      "description": "Project containing the support agent. Leave empty to use the hidden support project.",
+      "path": "agent_project_id",
+      "section": "support_assistant",
+      "default": null,
+      "enum_source": "projects",
+      "visible_when": { "field": "support_assistant_enabled", "value": true }
+    },
+    "support_assistant_agent_id": {
+      "type": "integer",
+      "title": "Active Support Agent",
+      "description": "Agent or pipeline that handles support requests.",
+      "path": "agent_id",
+      "section": "support_assistant",
+      "default": null,
+      "enum_source": "agents",
+      "visible_when": { "field": "support_assistant_enabled", "value": true }
+    },
+    "support_assistant_welcome_message": {
+      "type": "string",
+      "title": "Welcome Message",
+      "description": "Initial message shown when users open the Support Assistant.",
+      "path": "welcome_message",
+      "section": "support_assistant",
+      "default": "Hello! How can I help you today?",
+      "visible_when": { "field": "support_assistant_enabled", "value": true }
+    },
+    "support_assistant_name": {
+      "type": "string",
+      "title": "Assistant Name",
+      "description": "Display name for the Support Assistant.",
+      "path": "assistant_name",
+      "section": "support_assistant",
+      "default": "ELITEA Support",
+      "visible_when": { "field": "support_assistant_enabled", "value": true }
+    }
+  }
+}
