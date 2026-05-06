@@ -26,8 +26,9 @@ class API(api_tools.APIBase):
         return serialize({
             'enabled': True,
             'title': config.get('assistant_name', 'ELITEA Support'),
-            'welcomeMessage': config.get('welcome_message', ''),
+            'welcome_message': config.get('welcome_message', ''),
             'placeholder': config.get('placeholder', 'Type a message...'),
+            'support_project_id': module.support_project_id,
         }), 200
 
     @add_support_project_id
@@ -60,6 +61,6 @@ class API(api_tools.APIBase):
         return serialize({
             'enabled': True,
             'title': config.get('assistant_name', 'ELITEA Support'),
-            'welcomeMessage': config.get('welcome_message', ''),
+            'welcome_message': config.get('welcome_message', ''),
             'placeholder': config.get('placeholder', 'Type a message...'),
         }), 200
