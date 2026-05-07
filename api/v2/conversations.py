@@ -22,7 +22,7 @@ class API(api_tools.APIBase):
     @api_tools.endpoint_metrics
     def get(self, project_id: int, **kwargs):
         user_id = auth.current_user().get("id")
-        limit = request.args.get('limit', default=20, type=int)
+        limit = request.args.get('limit', default=5, type=int)
         offset = request.args.get('offset', default=0, type=int)
 
         result = rpc_tools.RpcMixin().rpc.timeout(5).chat_list_conversations_rpc(
