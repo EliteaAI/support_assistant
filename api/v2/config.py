@@ -76,6 +76,16 @@ class API(api_tools.APIBase):
         if 'agent_project_id' in data:
             module.descriptor.config['agent_project_id'] = data['agent_project_id']
 
+        if 'welcome_message' in data:
+            module.descriptor.config['welcome_message'] = data['welcome_message']
+
+        if 'assistant_name' in data:
+            module.descriptor.config['assistant_name'] = data['assistant_name']
+
+        if 'support_project_id' in data:
+            module.descriptor.config['support_project_id'] = data['support_project_id']
+            module._support_project_id = data['support_project_id']
+
         module.descriptor.config.save()
         config: dict = module.descriptor.config
 
