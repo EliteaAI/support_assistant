@@ -1,5 +1,7 @@
+from queue import Empty
+
 from flask import request
-from tools import api_tools, auth, config as c, serialize
+from tools import api_tools, auth, config as c, serialize, rpc_tools
 
 from ...utils.decorators import add_support_project_id
 
@@ -20,8 +22,21 @@ class API(api_tools.APIBase):
     def get(self, project_id: int, **kwargs):
         """Get support assistant config for FE widget"""
         from tools import this
+
         module = this.for_module("support_assistant").module
         config: dict = module.descriptor.config
+
+        current_user = auth.current_user()
+        user_id = current_user.get('id')
+        user_name = current_user.get('name', '')
+        user_avatar = None
+
+        if user_id:
+            try:
+                social_data = rpc_tools.RpcMixin().rpc.timeout(2).social_get_user(user_id)
+                user_avatar = social_data.get('avatar') if social_data else None
+            except (Empty, KeyError):
+                pass
 
         return serialize({
             'enabled': True,
@@ -30,6 +45,11 @@ class API(api_tools.APIBase):
             'placeholder': config.get('placeholder', 'Type a message...'),
             'support_project_id': module.support_project_id,
             'agent_id': config.get('agent_id', ''),
+            'user': {
+                'id': user_id,
+                'name': user_name,
+                'avatar': user_avatar,
+            },
         }), 200
 
     @add_support_project_id
