@@ -29,6 +29,7 @@ class API(api_tools.APIBase):
             'welcome_message': config.get('welcome_message', ''),
             'placeholder': config.get('placeholder', 'Type a message...'),
             'support_project_id': module.support_project_id,
+            'agent_id': config.get('agent_id', ''),
         }), 200
 
     @add_support_project_id
