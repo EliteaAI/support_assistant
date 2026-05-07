@@ -22,21 +22,37 @@ class API(api_tools.APIBase):
     @api_tools.endpoint_metrics
     def get(self, project_id: int, **kwargs):
         user_id = auth.current_user().get("id")
-        limit = request.args.get('limit', default=5, type=int)
+
+        # Pagination
+        limit = request.args.get('limit', default=20, type=int)
         offset = request.args.get('offset', default=0, type=int)
+
+        # Search
+        query = request.args.get('q', default=None, type=str)
+
+        # Sorting
+        sort_by = request.args.get('sort_by', default='created_at', type=str)
+        sort_order = request.args.get('sort_order', default='desc', type=str)
 
         result = rpc_tools.RpcMixin().rpc.timeout(5).chat_list_conversations_rpc(
             project_id=project_id,
             user_id=user_id,
             source='support',
             include_hidden=True,
+            query=query,
             limit=limit,
             offset=offset,
-            sort_by='created_at',
-            sort_order='desc',
+            sort_by=sort_by,
+            sort_order=sort_order,
         )
 
-        return serialize({"items": result.get('rows', []), "total": result.get('total', 0)}), 200
+        return serialize({
+            "items": result.get('rows', []),
+            "total": result.get('total', 0),
+            "limit": limit,
+            "offset": offset,
+            "has_more": (offset + limit) < result.get('total', 0),
+        }), 200
 
     @add_support_project_id
     @auth.decorators.check_api({
