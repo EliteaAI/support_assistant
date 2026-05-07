@@ -1,0 +1,46 @@
+{
+  "$schema": "https://elitea.ai/admin-config-schema/v1",
+  "plugin": "support_assistant",
+  "properties": {
+    "support_project_id": {
+      "type": "integer",
+      "title": "Support Project ID",
+      "description": "Project ID used by the support assistant for conversations. Auto-created if left empty.",
+      "path": "support_project_id",
+      "section": "support_assistant",
+      "default": null
+    },
+    "support_agent_project_id": {
+      "type": "integer",
+      "title": "Agent Project ID",
+      "description": "Project ID where the support agent is located.",
+      "path": "agent_project_id",
+      "section": "support_assistant",
+      "default": null
+    },
+    "support_agent_id": {
+      "type": "integer",
+      "title": "Agent ID",
+      "description": "Application ID of the support agent.",
+      "path": "agent_id",
+      "section": "support_assistant",
+      "default": null
+    },
+    "support_welcome_message": {
+      "type": "string",
+      "title": "Welcome Message",
+      "description": "Initial greeting message shown in the support widget.",
+      "path": "welcome_message",
+      "section": "support_assistant",
+      "default": "Hello! How can I help you today?"
+    },
+    "support_assistant_name": {
+      "type": "string",
+      "title": "Assistant Name",
+      "description": "Display name for the support assistant.",
+      "path": "assistant_name",
+      "section": "support_assistant",
+      "default": "ELITEA Support"
+    }
+  }
+}
