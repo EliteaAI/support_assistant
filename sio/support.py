@@ -77,7 +77,7 @@ class SIO:
             'conversation_uuid': parsed.conversation_uuid,
             'participant_id': participant['id'],
             'user_input': parsed.content,
-            'attachments_info': parsed.attachments or [],
+            'attachments_info': [{'filepath': fp} for fp in (parsed.attachments or [])],
         }
 
         self.context.rpc_manager.call.chat_predict_sio(
