@@ -4,6 +4,45 @@ from tools import auth, db
 from ..models.pd.support import SupportPredictPayload
 
 
+def _emit_error(context, sid: str, message: str, code: str):
+    context.sio.emit(
+        'support_error',
+        {'error': message, 'code': code},
+        to=sid
+    )
+
+
+def _get_agent_llm_settings(project_id: int, agent_id: int) -> dict | None:
+    """
+    Extract LLM settings from the support agent's default version.
+    Required for processing document attachments (non-image files).
+    """
+    try:
+        from plugins.elitea_core.models.all import Application
+        with db.get_session(project_id) as session:
+            application = session.query(Application).filter(
+                Application.id == agent_id
+            ).first()
+            if not application:
+                log.warning(f"Support agent {agent_id} not found in project {project_id}")
+                return None
+
+            default_version = application.get_default_version()
+            if not default_version:
+                log.warning(f"No default version found for support agent {agent_id}")
+                return None
+
+            llm_settings = default_version.llm_settings
+            if not llm_settings:
+                log.warning(f"No LLM settings found for support agent {agent_id} version {default_version.id}")
+                return None
+
+            return llm_settings
+    except Exception as e:
+        log.error(f"Failed to get LLM settings for support agent: {e}")
+        return None
+
+
 class SIO:
     @web.sio("support_predict")
     def support_predict(self, sid: str, data: dict) -> None:
@@ -26,18 +65,18 @@ class SIO:
         module = this.for_module("support_assistant").module
 
         if not module.is_enabled:
-            self._emit_error(sid, "Support Assistant not available", "SERVICE_UNAVAILABLE")
+            _emit_error(self.context, sid, "Support Assistant not available", "SERVICE_UNAVAILABLE")
             return
 
         try:
             parsed = SupportPredictPayload.model_validate(data)
         except Exception as e:
-            self._emit_error(sid, str(e), "VALIDATION_ERROR")
+            _emit_error(self.context, sid, str(e), "VALIDATION_ERROR")
             return
 
         current_user = auth.current_user(auth_data=auth.sio_users.get(sid))
         if not current_user:
-            self._emit_error(sid, "Unauthorized", "UNAUTHORIZED")
+            _emit_error(self.context, sid, "Unauthorized", "UNAUTHORIZED")
             return
 
         user_id = current_user['id']
@@ -45,7 +84,7 @@ class SIO:
 
         agent_id = module.descriptor.config.get('agent_id')
         if not agent_id:
-            self._emit_error(sid, "Support agent not configured", "NOT_CONFIGURED")
+            _emit_error(self.context, sid, "Support agent not configured", "NOT_CONFIGURED")
             return
 
         agent_project_id = module.descriptor.config.get('agent_project_id') or module.support_project_id
@@ -58,7 +97,7 @@ class SIO:
         )
 
         if not conversation:
-            self._emit_error(sid, "Conversation not found", "NOT_FOUND")
+            _emit_error(self.context, sid, "Conversation not found", "NOT_FOUND")
             return
 
         participant = self.context.rpc_manager.call.chat_add_application_participant_rpc(
@@ -69,8 +108,11 @@ class SIO:
         )
 
         if not participant:
-            self._emit_error(sid, "Failed to setup support agent", "AGENT_ERROR")
+            _emit_error(self.context, sid, "Failed to setup support agent", "AGENT_ERROR")
             return
+
+        # Extract LLM settings from the support agent for document attachment processing
+        llm_settings = _get_agent_llm_settings(agent_project_id, agent_id)
 
         predict_payload = {
             'project_id': module.support_project_id,
@@ -79,6 +121,7 @@ class SIO:
             'user_input': parsed.content,
             'attachments_info': [{'filepath': fp} for fp in (parsed.attachments or [])],
             'runtime_context': parsed.support_assistant_context.model_dump() if parsed.support_assistant_context else None,
+            'llm_settings': llm_settings,
         }
 
         self.context.rpc_manager.call.chat_predict_sio(
@@ -86,9 +129,4 @@ class SIO:
             data=predict_payload
         )
 
-    def _emit_error(self, sid: str, message: str, code: str):
-        self.context.sio.emit(
-            'support_error',
-            {'error': message, 'code': code},
-            to=sid
-        )
+
