@@ -73,11 +73,18 @@ class Module(module.ModuleModel):
             log.error(f"Support Assistant: failed to create project: {e}")
 
     def ensure_user_enrolled(self, user_id: int) -> bool:
-        """Lazy-enroll user in support project as viewer"""
+        """Lazy-enroll user in support project as viewer if they have no existing role"""
         if not self.support_project_id:
             return False
 
         try:
+            user_roles = self.context.rpc_manager.call.admin_get_user_roles(
+                project_id=self.support_project_id,
+                user_id=user_id
+            )
+            if user_roles:
+                return True
+
             self.context.rpc_manager.call.admin_add_user_to_project(
                 project_id=self.support_project_id,
                 user_id=user_id,
@@ -85,5 +92,5 @@ class Module(module.ModuleModel):
             )
             return True
         except Exception as e:
-            log.warning(f"User enrollment failed (may already exist): {e}")
+            log.warning(f"User enrollment failed: {e}")
             return True
