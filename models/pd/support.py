@@ -21,3 +21,4 @@ class SupportPredictPayload(BaseModel):
     content: str = Field(..., min_length=1)
     attachments: Optional[List[str]] = None
     support_assistant_context: Optional[SupportAssistantContext] = None
+    question_id: Optional[int] = None

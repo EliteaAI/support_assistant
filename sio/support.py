@@ -122,6 +122,7 @@ class SIO:
             'attachments_info': [{'filepath': fp} for fp in (parsed.attachments or [])],
             'runtime_context': parsed.support_assistant_context.model_dump() if parsed.support_assistant_context else None,
             'llm_settings': llm_settings,
+            'question_id': parsed.question_id,
         }
 
         self.context.rpc_manager.call.chat_predict_sio(
