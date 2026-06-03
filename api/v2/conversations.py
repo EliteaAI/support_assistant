@@ -1,6 +1,6 @@
 from flask import request
 from pylon.core.tools import log
-from tools import api_tools, auth, config as c, rpc_tools
+from tools import api_tools, auth, config as c, rpc_tools, register_openapi
 
 from ...models.pd.conversation import ConversationCreateRequest
 from ...utils.decorators import add_support_project_id
@@ -11,6 +11,22 @@ from tools import serialize
 class API(api_tools.APIBase):
     url_params = ['']
 
+    @register_openapi(
+        name="List Support Conversations",
+        description="List support assistant conversations for the current user with pagination and search.",
+        parameters=[
+            {"name": "limit", "in": "query", "schema": {"type": "integer", "default": 20},
+             "description": "Number of conversations to return."},
+            {"name": "offset", "in": "query", "schema": {"type": "integer", "default": 0},
+             "description": "Pagination offset."},
+            {"name": "q", "in": "query", "schema": {"type": "string"},
+             "description": "Search query string."},
+            {"name": "sort_by", "in": "query", "schema": {"type": "string", "default": "created_at"},
+             "description": "Field to sort by."},
+            {"name": "sort_order", "in": "query", "schema": {"type": "string", "default": "desc"},
+             "description": "Sort order (asc or desc)."},
+        ],
+    )
     @add_support_project_id
     @auth.decorators.check_api({
         "permissions": ["models.support_assistant.conversations.list"],
@@ -54,6 +70,11 @@ class API(api_tools.APIBase):
             "has_more": (offset + limit) < result.get('total', 0),
         }), 200
 
+    @register_openapi(
+        name="Create Support Conversation",
+        description="Create a new support assistant conversation.",
+        request_body=ConversationCreateRequest,
+    )
     @add_support_project_id
     @auth.decorators.check_api({
         "permissions": ["models.support_assistant.conversations.create"],

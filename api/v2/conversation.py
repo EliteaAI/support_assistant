@@ -1,4 +1,4 @@
-from tools import api_tools, auth, config as c, rpc_tools, serialize
+from tools import api_tools, auth, config as c, rpc_tools, serialize, register_openapi
 
 from ...utils.decorators import add_support_project_id
 
@@ -6,6 +6,14 @@ from ...utils.decorators import add_support_project_id
 class API(api_tools.APIBase):
     url_params = ['<string:conversation_uuid>']
 
+    @register_openapi(
+        name="Get Support Conversation",
+        description="Get details of a support assistant conversation by UUID.",
+        parameters=[
+            {"name": "conversation_uuid", "in": "path", "schema": {"type": "string"},
+             "description": "Conversation UUID."},
+        ],
+    )
     @add_support_project_id
     @auth.decorators.check_api({
         "permissions": ["models.support_assistant.conversations.details"],
@@ -41,6 +49,14 @@ class API(api_tools.APIBase):
 
         return serialize(conversation_details), 200
 
+    @register_openapi(
+        name="Delete Support Conversation",
+        description="Delete a support assistant conversation by UUID.",
+        parameters=[
+            {"name": "conversation_uuid", "in": "path", "schema": {"type": "string"},
+             "description": "Conversation UUID."},
+        ],
+    )
     @add_support_project_id
     @auth.decorators.check_api({
         "permissions": ["models.support_assistant.conversations.delete"],

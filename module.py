@@ -1,5 +1,5 @@
 from pylon.core.tools import module, log, web
-from tools import auth, db, config as c
+from tools import auth, db, config as c, openapi_registry
 
 
 class Module(module.ModuleModel):
@@ -13,6 +13,16 @@ class Module(module.ModuleModel):
 
     def ready(self):
         self._ensure_support_project()
+        self._register_openapi()
+
+    def _register_openapi(self):
+        from .api import v2 as api_v2
+        openapi_registry.register_plugin(
+            plugin_name="support_assistant",
+            version=self.descriptor.metadata.get("version", "1.0.0"),
+            description="Support assistant conversations and configuration",
+            api_module=api_v2,
+        )
 
     def deinit(self):
         self.descriptor.deinit_all()

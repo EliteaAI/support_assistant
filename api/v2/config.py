@@ -1,15 +1,19 @@
 from queue import Empty
 
 from flask import request
-from tools import api_tools, auth, config as c, serialize, rpc_tools
+from tools import api_tools, auth, config as c, serialize, rpc_tools, register_openapi
 
+from ...models.pd.config import ConfigUpdateRequest
 from ...utils.decorators import add_support_project_id
-
 
 
 class API(api_tools.APIBase):
     url_params = ['']
 
+    @register_openapi(
+        name="Get Support Assistant Config",
+        description="Get the support assistant configuration for the frontend widget.",
+    )
     @add_support_project_id
     @auth.decorators.check_api({
         "permissions": ["models.support_assistant.config.read"],
@@ -52,6 +56,11 @@ class API(api_tools.APIBase):
             },
         }), 200
 
+    @register_openapi(
+        name="Update Support Assistant Config",
+        description="Update support assistant configuration. Admin only.",
+        request_body=ConfigUpdateRequest,
+    )
     @add_support_project_id
     @auth.decorators.check_api({
         "permissions": ["models.support_assistant.config.update"],

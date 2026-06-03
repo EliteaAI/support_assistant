@@ -1,6 +1,6 @@
 from flask import request
 from werkzeug.datastructures import FileStorage
-from tools import api_tools, auth, config as c, rpc_tools, serialize
+from tools import api_tools, auth, config as c, rpc_tools, serialize, register_openapi
 
 from ...utils.decorators import add_support_project_id
 
@@ -8,6 +8,14 @@ from ...utils.decorators import add_support_project_id
 class API(api_tools.APIBase):
     url_params = ['<string:conversation_uuid>', 'attachments']
 
+    @register_openapi(
+        name="Upload Conversation Attachments",
+        description="Upload file attachments to a support conversation. Supports regular and chunked uploads.",
+        parameters=[
+            {"name": "conversation_uuid", "in": "path", "schema": {"type": "string"},
+             "description": "Conversation UUID."},
+        ],
+    )
     @add_support_project_id
     @auth.decorators.check_api({
         "permissions": ["models.support_assistant.attachments.create"],
