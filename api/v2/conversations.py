@@ -1,11 +1,9 @@
 from flask import request
 from pylon.core.tools import log
-from tools import api_tools, auth, config as c, rpc_tools, register_openapi
-
+from tools import api_tools, auth, config as c, rpc_tools, register_openapi, serialize
 from ...models.pd.conversation import ConversationCreateRequest
 from ...utils.decorators import add_support_project_id
-
-from tools import serialize
+from ...utils.mcp_utils import add_mcp_toolkits_to_conversation
 
 
 class API(api_tools.APIBase):
@@ -103,5 +101,15 @@ class API(api_tools.APIBase):
                 'conversation_type': 'support',
             },
         )
+
+        if user_id and result.get('id'):
+            try:
+                add_mcp_toolkits_to_conversation(
+                    support_project_id=project_id,
+                    user_id=user_id,
+                    conversation_id=result['id'],
+                )
+            except Exception as e:
+                log.warning(f"[Support] Failed to add MCP toolkits to conversation {result.get('id')}: {e}")
 
         return serialize(result), 201
