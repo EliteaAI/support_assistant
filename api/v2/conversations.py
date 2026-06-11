@@ -1,11 +1,8 @@
 from flask import request
 from pylon.core.tools import log
-from tools import api_tools, auth, config as c, rpc_tools, register_openapi
-
+from tools import api_tools, auth, config as c, rpc_tools, register_openapi, serialize
 from ...models.pd.conversation import ConversationCreateRequest
 from ...utils.decorators import add_support_project_id
-
-from tools import serialize
 
 
 class API(api_tools.APIBase):
@@ -101,6 +98,7 @@ class API(api_tools.APIBase):
             meta={
                 'is_hidden': True,
                 'conversation_type': 'support',
+                'internal_tools': ['internal_mcp'],
             },
         )
 
