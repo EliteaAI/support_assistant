@@ -100,6 +100,13 @@ class SIO:
             _emit_error(self.context, sid, "Conversation not found", "NOT_FOUND")
             return
 
+        # Build runtime context: use per-message FE context if sent, otherwise empty dict.
+        # user_id is always injected server-side in chat_predict_sio.
+        if parsed.support_assistant_context:
+            runtime_context = parsed.support_assistant_context.model_dump(exclude_none=True)
+        else:
+            runtime_context = {}
+
         participant = self.context.rpc_manager.call.chat_add_application_participant_rpc(
             project_id=module.support_project_id,
             conversation_id=conversation['id'],
@@ -120,7 +127,7 @@ class SIO:
             'participant_id': participant['id'],
             'user_input': parsed.content,
             'attachments_info': [{'filepath': fp} for fp in (parsed.attachments or [])],
-            'runtime_context': parsed.support_assistant_context.model_dump() if parsed.support_assistant_context else None,
+            'runtime_context': runtime_context,
             'llm_settings': llm_settings,
             'question_id': parsed.question_id,
         }
