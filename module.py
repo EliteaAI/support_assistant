@@ -106,12 +106,12 @@ class Module(module.ModuleModel):
                 "section": "credentials",
                 "label": "GitHub (Anonymous)",
                 "data": {
-                    "app_id": "",
+                    "app_id": None,
                     "base_url": "https://api.github.com",
-                    "password": "",
-                    "username": "",
-                    "access_token": "",
-                    "app_private_key": "",
+                    "password": None,
+                    "username": None,
+                    "access_token": None,
+                    "app_private_key": None,
                 },
             },
             {
