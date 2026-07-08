@@ -134,7 +134,8 @@ class SIO:
 
         self.context.rpc_manager.call.chat_predict_sio(
             sid=sid,
-            data=predict_payload
+            data=predict_payload,
+            eligible_for_autoapproval=True,
         )
 
 
