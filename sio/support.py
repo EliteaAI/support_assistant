@@ -138,4 +138,30 @@ class SIO:
             eligible_for_autoapproval=True,
         )
 
+    @web.sio("support_stop")
+    def support_stop(self, sid: str, data: dict) -> None:
+        """
+        Stop a running support assistant task.
+
+        Accepts: { task_id: string }
+        """
+        from tools import this
+        module = this.for_module("support_assistant").module
+
+        if not module.is_enabled:
+            _emit_error(self.context, sid, "Support Assistant not available", "SERVICE_UNAVAILABLE")
+            return
+
+        current_user = auth.current_user(auth_data=auth.sio_users.get(sid))
+        if not current_user:
+            _emit_error(self.context, sid, "Unauthorized", "UNAUTHORIZED")
+            return
+
+        task_id = data.get('task_id')
+        if not task_id:
+            _emit_error(self.context, sid, "Missing task_id", "VALIDATION_ERROR")
+            return
+
+        self.context.rpc_manager.call.stop_task(task_id=task_id)
+
 
