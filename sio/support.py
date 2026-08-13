@@ -143,7 +143,14 @@ class SIO:
         """
         Stop a running support assistant task.
 
-        Accepts: { task_id: string }
+        Accepts: { message_id: string }
+
+        Delegates to chat_stop_task RPC which handles all stop logic:
+        1. Stop task via Arbiter
+        2. Mark chat run as stopped in Redis
+        3. Set is_streaming = False in database
+        4. Retire all HITL interrupts
+        5. Emit chat_message_sync or chat_message_delete event
         """
         from tools import this
         module = this.for_module("support_assistant").module
@@ -157,11 +164,29 @@ class SIO:
             _emit_error(self.context, sid, "Unauthorized", "UNAUTHORIZED")
             return
 
-        task_id = data.get('task_id')
-        if not task_id:
-            _emit_error(self.context, sid, "Missing task_id", "VALIDATION_ERROR")
+        message_id = data.get('message_id')
+        if not message_id:
+            _emit_error(self.context, sid, "Missing message_id", "VALIDATION_ERROR")
             return
 
-        self.context.rpc_manager.call.stop_task(task_id=task_id)
+        user_id = current_user['id']
+        support_project_id = module.support_project_id
 
+        log.info(f"[support_stop] Stopping message_id={message_id} for user={user_id}")
 
+        try:
+            result = self.context.rpc_manager.call.chat_stop_task(
+                project_id=support_project_id,
+                message_group_uuid=message_id,
+                user_id=user_id,
+            )
+
+            if result.get('error'):
+                log.warning(f"[support_stop] Stop failed: {result['error']}")
+                _emit_error(self.context, sid, result['error'], result.get('code', 'STOP_ERROR'))
+            else:
+                log.info(f"[support_stop] Task stopped successfully for message_id={message_id}")
+
+        except Exception as e:
+            log.error(f"[support_stop] Exception stopping task: {e}")
+            _emit_error(self.context, sid, f"Failed to stop task: {str(e)}", "STOP_ERROR")
