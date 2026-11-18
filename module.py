@@ -259,7 +259,10 @@ class Module(module.ModuleModel):
             self.context.rpc_manager.call.admin_add_user_to_project(
                 project_id=self.support_project_id,
                 user_id=user_id,
-                role_names=['viewer']
+                role_names=['viewer'],
+                # Lazy enrollment, not anyone's action (#7504)
+                audit_ctx={"actor_type": "system", "actor_id": None, "actor_name": "System",
+                           "actor_email": None, "source": "system", "request_id": None},
             )
             return True
         except Exception as e:
