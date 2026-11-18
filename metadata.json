@@ -1,6 +1,6 @@
 {
   "name": "support_assistant",
-  "version": "0.2",
+  "version": "0.3",
   "description": "Environment-wide Support Assistant chatbot",
   "depends_on": [
     "elitea_core",
