@@ -98,7 +98,7 @@ class API(api_tools.APIBase):
             meta={
                 'is_hidden': True,
                 'conversation_type': 'support',
-                'internal_tools': ['internal_mcp'],
+                'internal_tools': ['elitea_builder'],
             },
         )
 
